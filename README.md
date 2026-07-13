@@ -36,7 +36,12 @@
 SmartSleep-CS/
 ├── dify-workflow.yml          # Dify 工作流 DSL（可直接导入 Dify）
 ├── docs/
-│   └── workflow-architecture.md  # 工作流详细架构说明
+│   ├── workflow-architecture.md  # 工作流详细架构说明
+│   └── deployment.md          # 部署上线方案（API/嵌入/小程序/监控/成本）
+├── tests/
+│   ├── test-cases.md          # 测试用例矩阵（52用例+12对抗测试）
+│   ├── test_e2e.py            # 自动化端到端测试脚本
+│   └── .env.example           # API Key 配置模板
 ├── knowledge-base/            # 知识库文档（需自行上传至 Dify）
 │   ├── product-info/          # 产品信息类文档
 │   ├── usage-after-sales/     # 使用/售后类文档
@@ -95,3 +100,32 @@ SmartSleep-CS/
 ## 📄 License
 
 MIT
+
+---
+
+## 🧪 测试验证
+
+详见 [tests/test-cases.md](tests/test-cases.md)，包含：
+- 52个常规测试用例（4分类 + 边界异常）
+- 12个对抗测试用例（越狱/注入/跨域/隐私窃取）
+
+**快速运行自动化测试：**
+```bash
+cd tests
+cp .env.example .env  # 填入你的 Dify API Key
+pip install requests python-dotenv
+python test_e2e.py              # 全量测试
+python test_e2e.py --quick      # 只跑P0
+python test_e2e.py --adversarial # 含对抗测试
+python test_e2e.py --json       # 输出JSON报告
+```
+
+## 🚀 部署上线
+
+详见 [docs/deployment.md](docs/deployment.md)，包含：
+- 3种发布方式（WebApp / 嵌入式 / API调用）
+- Python & Node.js 接入代码
+- 微信小程序中转方案
+- 监控告警配置
+- 成本估算（¥0.03/次 → DeepSeek可降至¥0.003/次）
+- 上线 Checklist
