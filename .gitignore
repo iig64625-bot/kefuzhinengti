@@ -1,0 +1,25 @@
+# Dify
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Hermes
+.hermes/
+
+# Claude
+.claude/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Node
+node_modules/
