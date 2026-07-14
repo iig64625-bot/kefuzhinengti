@@ -1,0 +1,772 @@
+app:
+  description: |
+    星眠 SmartSleep 电商客服 Agent
+    选购/售后/订单/退款；意图分流、空检索兜底、高风险转人工
+    订单走 HTTP 工具对接自建 FastAPI（超时重试在后端 tools 门面完成）
+    面向用户体验：完整可读答复，无内部证据标签
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: advanced-chat
+  name: 星眠智能客服
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai_api_compatible:0.0.55@d64be9924f2edf13fd5329fc03fdfc0d0e0e36e0aef5321c4942f0845de8c030
+    version: null
+kind: app
+version: 0.6.0
+workflow:
+  conversation_variables: []
+  environment_variables:
+  - description: FastAPI public base URL, no trailing slash. Example https://xxxx.ngrok-free.app
+    id: env-backend-base-url
+    name: BACKEND_BASE_URL
+    value: http://127.0.0.1:8000
+    value_type: string
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 50
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: "您好，我是星眠 SmartSleep 智能客服 🌙\n\n有什么可以帮您的？比如选购对比、使用售后、订单物流或退款政策，直接问我就好。\n\n若枕头过热、异味或冒烟，请先停用，并回复「转人工」。"
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - 三个型号有什么区别？
+    - 蓝牙连不上怎么办？
+    - 怎么查我的订单？
+    - 如何申请退款？
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: question-classifier
+      id: e-start-clf
+      source: '1783936703997'
+      sourceHandle: source
+      target: '9000000000001'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: answer
+      id: e-clf-handoff
+      source: '9000000000001'
+      sourceHandle: '1'
+      target: '9000000000002'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: code
+      id: e-clf-order-code
+      source: '9000000000001'
+      sourceHandle: '2'
+      target: '9000000000003'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: if-else
+      id: e-order-extract-if
+      source: '9000000000003'
+      sourceHandle: source
+      target: '9000000000014'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: e-order-if-ask
+      source: '9000000000014'
+      sourceHandle: 'true'
+      target: '9000000000011'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: http-request
+      id: e-order-if-http
+      source: '9000000000014'
+      sourceHandle: 'false'
+      target: '9000000000012'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: http-request
+        targetType: code
+      id: e-order-http-norm
+      source: '9000000000012'
+      sourceHandle: source
+      target: '9000000000013'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: http-request
+        targetType: answer
+      id: e-order-http-fail
+      source: '9000000000012'
+      sourceHandle: fail-branch
+      target: '9000000000016'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: llm
+      id: e-order-norm-llm
+      source: '9000000000013'
+      sourceHandle: source
+      target: '9000000000004'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: e-order-llm-ans
+      source: '9000000000004'
+      sourceHandle: source
+      target: '9000000000005'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: e-clf-kr
+      source: '9000000000001'
+      sourceHandle: '3'
+      target: '1783948863338'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: code
+      id: e-kr-check
+      source: '1783948863338'
+      sourceHandle: source
+      target: '9000000000006'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: if-else
+      id: e-check-if
+      source: '9000000000006'
+      sourceHandle: source
+      target: '9000000000007'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: e-if-empty
+      source: '9000000000007'
+      sourceHandle: 'true'
+      target: '9000000000008'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: e-if-llm
+      source: '9000000000007'
+      sourceHandle: 'false'
+      target: '1783937925952'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: e-llm-ans
+      source: '1783937925952'
+      sourceHandle: source
+      target: '1783937062825'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: 用户输入
+        type: start
+        variables: []
+      height: 72
+      id: '1783936703997'
+      position:
+        x: -200
+        y: 400
+      positionAbsolute:
+        x: -200
+        y: 400
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        classes:
+        - id: '1'
+          name: 人工干预
+        - id: '2'
+          name: 订单物流
+        - id: '3'
+          name: 常规咨询
+        instructions: "将用户问题分到且仅分到一类：\n1) 人工干预：转人工/投诉/加急/人身威胁/过热异味冒烟须人工、明确要求客服电话介入\n2) 订单物流：查订单、物流、发货、快递、运单、订单号(如PP开头)\n3) 常规咨询：产品型号区别、热敷选购、使用故障、保修、退款政策说明（非投诉）\n不确定时归为常规咨询。"
+        model:
+          completion_params:
+            temperature: 0.1
+          mode: chat
+          name: gpt-5.4
+          provider: langgenius/openai_api_compatible/openai_api_compatible
+        query_variable_selector:
+        - '1783936703997'
+        - sys.query
+        topics: []
+        type: question-classifier
+        vision:
+          enabled: false
+        title: 意图规划(Classifier)
+      height: 200
+      id: '9000000000001'
+      position:
+        x: 100
+        y: 360
+      positionAbsolute:
+        x: 100
+        y: 360
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        answer: "【需要人工协助】\n\n理解您的心情，我已为您标记优先处理。\n\n请联系人工客服，并尽量提供：\n• 订单号（如有）\n• 问题简述\n• 相关截图（如有）\n\n客服热线：400-888-3366（9:00-21:00）\n邮箱：service@starsleep.cn（标题可注明【投诉】或【加急】）\n\n如果是过热、异味或冒烟，请立即停止使用，保留产品，勿自行拆机。"
+        selected: false
+        title: 直接回复-转人工
+        type: answer
+        variables: []
+      height: 140
+      id: '9000000000002'
+      position:
+        x: 420
+        y: 120
+      positionAbsolute:
+        x: 420
+        y: 120
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 280
+    - data:
+        code: "import re\n\ndef main(query: str) -> dict:\n    q = query or \"\"\n    m = re.search(r\"PP\\d{10,}\", q.upper().replace(\" \", \"\"))\n    order_id = m.group(0) if m else \"\"\n    if order_id:\n        return {\"order_id\": order_id, \"need_order_id\": \"false\"}\n    return {\"order_id\": \"\", \"need_order_id\": \"true\"}\n"
+        code_language: python3
+        outputs:
+          order_id:
+            children: null
+            type: string
+          need_order_id:
+            children: null
+            type: string
+        selected: false
+        title: 抽取订单号
+        type: code
+        variables:
+        - value_selector:
+          - '1783936703997'
+          - sys.query
+          variable: query
+      height: 52
+      id: '9000000000003'
+      position:
+        x: 420
+        y: 360
+      positionAbsolute:
+        x: 420
+        y: 360
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: is
+            value: 'true'
+            varType: string
+            variable_selector:
+            - '9000000000003'
+            - need_order_id
+          id: 'true'
+          logical_operator: and
+        selected: false
+        title: IF-是否缺订单号
+        type: if-else
+      height: 124
+      id: '9000000000014'
+      position:
+        x: 720
+        y: 340
+      positionAbsolute:
+        x: 720
+        y: 340
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        answer: "您好～要帮您查订单和物流，还需要您提供一下订单号哦。\n\n订单号一般以 PP 开头，例如：PP20260713001234\n\n您可以在 App → 我的 → 我的订单 里找到，发给我就好；也可以拨打客服热线 400-888-3366（9:00-21:00）由人工协助查询。"
+        selected: false
+        title: 请提供订单号
+        type: answer
+        variables: []
+      height: 140
+      id: '9000000000011'
+      position:
+        x: 1020
+        y: 200
+      positionAbsolute:
+        x: 1020
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 280
+    - data:
+        authorization:
+          type: no-auth
+          config: null
+        body:
+          type: none
+          data: ''
+        error_strategy: fail-branch
+        headers: ''
+        method: get
+        params: ''
+        selected: false
+        ssl_verify: false
+        timeout:
+          connect: 10
+          read: 15
+          write: 10
+        title: HTTP-query_order
+        type: http-request
+        url: '{{#env.BACKEND_BASE_URL#}}/api/v1/tools/query_order?order_id={{#9000000000003.order_id#}}'
+      height: 107
+      id: '9000000000012'
+      position:
+        x: 1020
+        y: 360
+      positionAbsolute:
+        x: 1020
+        y: 360
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\n\ndef main(body: str, order_id: str) -> dict:\n    try:\n        data = json.loads(body or \"{}\")\n    except Exception:\n        return {\n            \"tool_ok\": \"false\",\n            \"order_id\": order_id or \"\",\n            \"need_order_id\": \"false\",\n            \"tool_error\": \"订单接口返回无法解析\",\n            \"order_json\": \"\"\n        }\n    if data.get(\"ok\") and data.get(\"data\"):\n        return {\n            \"tool_ok\": \"true\",\n            \"order_id\": order_id or str(data[\"data\"].get(\"order_id\") or \"\"),\n            \"need_order_id\": \"false\",\n            \"tool_error\": \"\",\n            \"order_json\": json.dumps(data[\"data\"], ensure_ascii=False)\n        }\n    err = data.get(\"error\") or data.get(\"assistant_hint\") or \"查询失败\"\n    return {\n        \"tool_ok\": \"false\",\n        \"order_id\": order_id or \"\",\n        \"need_order_id\": \"false\",\n        \"tool_error\": str(err),\n        \"order_json\": json.dumps(data, ensure_ascii=False) if data else \"\"\n    }\n"
+        code_language: python3
+        outputs:
+          tool_ok:
+            children: null
+            type: string
+          order_id:
+            children: null
+            type: string
+          need_order_id:
+            children: null
+            type: string
+          tool_error:
+            children: null
+            type: string
+          order_json:
+            children: null
+            type: string
+        selected: false
+        title: 解析HTTP工具响应
+        type: code
+        variables:
+        - value_selector:
+          - '9000000000012'
+          - body
+          variable: body
+        - value_selector:
+          - '9000000000003'
+          - order_id
+          variable: order_id
+      height: 52
+      id: '9000000000013'
+      position:
+        x: 1320
+        y: 360
+      positionAbsolute:
+        x: 1320
+        y: 360
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        answer: "非常抱歉，实时订单查询接口暂时不可用，为避免给您错误物流信息，我这边先不做猜测。\n\n建议您联系人工客服核实：\n• 热线：400-888-3366（9:00-21:00）\n• 邮箱：service@starsleep.cn\n\n请尽量提供订单号，我们会尽快帮您确认发货与物流状态。"
+        selected: false
+        title: 订单接口失败转人工
+        type: answer
+        variables: []
+      height: 140
+      id: '9000000000016'
+      position:
+        x: 1320
+        y: 520
+      positionAbsolute:
+        x: 1320
+        y: 520
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 280
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 5
+        model:
+          completion_params:
+            temperature: 0.2
+            max_tokens: 500
+          mode: chat
+          name: gpt-5.4
+          provider: langgenius/openai_api_compatible/openai_api_compatible
+        prompt_template:
+        - id: order-sys-001
+          role: system
+          text: "你是星眠 SmartSleep 客服，负责解答订单与物流问题，语气亲切、耐心。\n\n规则：\n1. 只能依据下方工具返回信息说明订单状态，禁止编造物流。\n2. tool_ok=true：用自然语言告诉用户状态、商品、物流（如有），并补充：也可在 App→我的→我的订单里查看。\n3. need_order_id=true：友好请用户提供订单号，并举例 PP20260713001234，不要猜测。\n4. tool_error 非空：致歉并引导人工客服 400-888-3366 / service@starsleep.cn。\n5. 禁止提 HTTP、Mock、Trace、工具名、系统内部字段等内部词。\n6. 回答完整清晰，可分点，结尾可问还需要什么帮助。"
+        - id: order-user-001
+          role: user
+          text: "【用户问题】\n{{#sys.query#}}\n\n【工具query_order返回】\ntool_ok={{#9000000000013.tool_ok#}}\norder_id={{#9000000000013.order_id#}}\nneed_order_id={{#9000000000013.need_order_id#}}\ntool_error={{#9000000000013.tool_error#}}\norder_json={{#9000000000013.order_json#}}\n\n请按系统规则输出最终答复。"
+        retry_config:
+          retry_enabled: true
+          max_retries: 1
+          retry_interval: 1000
+        selected: false
+        title: LLM-订单工具答复
+        type: llm
+        vision:
+          enabled: false
+      height: 87
+      id: '9000000000004'
+      position:
+        x: 1620
+        y: 360
+      positionAbsolute:
+        x: 1620
+        y: 360
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        answer: '{{#9000000000004.text#}}'
+        selected: false
+        title: 直接回复-订单
+        type: answer
+        variables: []
+      height: 102
+      id: '9000000000005'
+      position:
+        x: 1920
+        y: 360
+      positionAbsolute:
+        x: 1920
+        y: 360
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        dataset_ids:
+        - JqLuk3IPGgHtzNtUIFNXTtFilPoPfK7SFXXOfWWAu8R70pYrFq6UoHuTuQRF5C3E
+        - G437Ik46HKo07gVblefMU+fIjHByomTtF6DDukpxXLX7puCJU8KoXyhnsFVwsJG2
+        - BEwCIz+d0x4pnBpmxRU8Bh95vcJ7lIWERxQzKsRbX+BccxU6hkzQuToWp/vxgkN0
+        - fJ4cUsOjvbBk9/7udWZ7HTQeR/+EnL6pSmu+XjG0euJRewsJa34W9/q1m4/tJtej
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          score_threshold: 0.25
+          score_threshold_enabled: true
+          top_k: 5
+          weights:
+            keyword_setting:
+              keyword_weight: 0.3
+            vector_setting:
+              embedding_model_name: BAAI/bge-m3
+              embedding_provider_name: langgenius/openai_api_compatible/openai_api_compatible
+              vector_weight: 0.7
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1783936703997'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: 知识检索-RAG
+        type: knowledge-retrieval
+      height: 173
+      id: '1783948863338'
+      position:
+        x: 420
+        y: 620
+      positionAbsolute:
+        x: 420
+        y: 620
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        code: "def main(result: list) -> dict:\n    empty = (result is None) or (isinstance(result, list) and len(result) == 0)\n    return {\n        \"is_empty\": empty,\n        \"hit_count\": 0 if empty else len(result),\n        \"trace\": \"retrieval_empty\" if empty else f\"retrieval_hit_{len(result)}\"\n    }\n"
+        code_language: python3
+        outputs:
+          is_empty:
+            children: null
+            type: boolean
+          hit_count:
+            children: null
+            type: number
+          trace:
+            children: null
+            type: string
+        selected: false
+        title: 结果验证-检索是否为空
+        type: code
+        variables:
+        - value_selector:
+          - '1783948863338'
+          - result
+          variable: result
+      height: 52
+      id: '9000000000006'
+      position:
+        x: 720
+        y: 620
+      positionAbsolute:
+        x: 720
+        y: 620
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: is
+            value: 'true'
+            varType: boolean
+            variable_selector:
+            - '9000000000006'
+            - is_empty
+          id: 'true'
+          logical_operator: and
+        selected: false
+        title: IF-空检索则兜底
+        type: if-else
+      height: 124
+      id: '9000000000007'
+      position:
+        x: 1000
+        y: 600
+      positionAbsolute:
+        x: 1000
+        y: 600
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        answer: "抱歉，我暂时没找到与您问题直接相关的准确资料，为了不误导您，我不适合凭空回答。\n\n您可以：\n1. 换个说法再问一次（例如补充型号：SS-100 / SS-200 / SS-300）\n2. 联系人工客服帮您核实\n\n客服热线：400-888-3366（9:00-21:00）\n邮箱：service@starsleep.cn\n\n也可以先点选下方常见问题试试。"
+        selected: false
+        title: 直接回复-空检索兜底
+        type: answer
+        variables: []
+      height: 140
+      id: '9000000000008'
+      position:
+        x: 1300
+        y: 520
+      positionAbsolute:
+        x: 1300
+        y: 520
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 280
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1783948863338'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}
+
+
+            {{#sys.files#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 5
+        model:
+          completion_params:
+            temperature: 0.3
+            max_tokens: 1200
+          mode: chat
+          name: gpt-5.4
+          provider: langgenius/openai_api_compatible/openai_api_compatible
+        prompt_template:
+        - id: af664d3c-9eb7-45ad-9ad6-a5f1923e6b0f
+          role: system
+          text: "你是「星眠 SmartSleep」官方客服，面向真实用户，语气温暖、专业、好懂，像靠谱的导购+售后专员。\n\n【回答目标】一次说清楚，减少用户来回追问。\n\n【内容规则】\n1. 只依据知识库检索结果与对话上下文，不编造价格、政策、物流状态。\n2. 选购/对比/热敷问题：优先用产品信息；忽略无关退款片段。\n3. 出现 SS-100/200/300、价格、热敷等必须回答，禁止说信息不足。\n4. 仅当检索结果为空或完全无关时，才说明暂无资料并给客服联系方式。\n\n【表达结构（务必遵守）】\n1. 先用1-2句给结论（用户最想知道的答案）\n2. 再用分点或简要对比补充细节（型号/价格/功能/适用人群或操作步骤）\n3. 最后给一句自然引导：可问预算、是否需要热敷、或是否继续排查，不要生硬推销\n4. 型号对比类回答，建议写成清晰条目，例如：\n   - SS-100（¥299）：...\n   - SS-200（¥499）：...\n   - SS-300（¥699）：...\n   然后补一句「怎么选」\n5. 故障类：先给最可能原因，再给 2-4 步排查，仍不行再引导人工\n\n【禁止】\n- 禁止输出括号备注、证据标签、RAG、Mock、系统轨迹、内部字段\n- 禁止「结论：」「要点：」这种生硬小标题堆砌；可用自然段落+分点\n- 禁止整段复制知识库原文\n\n【安全】过热/异味/冒烟：先停用再转人工；不代查他人订单；不承诺必退款；不诊断疾病。"
+        - id: 996044f9-1adc-4e27-9ee5-d1f61bd88f31
+          role: user
+          text: "【用户问题】\n{{#sys.query#}}\n\n【知识库检索结果】\n{{#context#}}\n\n请按客服话术完整回答用户：有结论、有细节、有怎么选/下一步；语气友好。不要输出任何括号证据或系统备注。"
+        retry_config:
+          retry_enabled: true
+          max_retries: 1
+          retry_interval: 1000
+        selected: false
+        title: LLM-RAG答复(含规划校验)
+        type: llm
+        vision:
+          enabled: false
+      height: 87
+      id: '1783937925952'
+      position:
+        x: 1300
+        y: 720
+      positionAbsolute:
+        x: 1300
+        y: 720
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        answer: '{{#1783937925952.text#}}'
+        selected: false
+        title: 直接回复-常规
+        type: answer
+        variables: []
+      height: 102
+      id: '1783937062825'
+      position:
+        x: 1600
+        y: 720
+      positionAbsolute:
+        x: 1600
+        y: 720
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    viewport:
+      x: 40
+      y: 40
+      zoom: 0.55
+  rag_pipeline_variables: []
