@@ -1,0 +1,82 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "StarSleep Mock OMS Tools",
+    "version": "1.0.0",
+    "description": "HTTP tools for Dify Agent / HTTP Request nodes. Includes resilient query_order facade."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8000",
+      "description": "Local backend (replace with ngrok/public URL for Dify Cloud)"
+    }
+  ],
+  "paths": {
+    "/api/v1/tools/query_order": {
+      "get": {
+        "operationId": "query_order",
+        "summary": "Query order with timeout/retry/degrade",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "PP20260713001234"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok or degraded payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "degraded": { "type": "boolean" },
+                    "fallback": { "type": "string" },
+                    "attempts": { "type": "integer" },
+                    "error": { "type": "string" },
+                    "assistant_hint": { "type": "string" },
+                    "data": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orders/{order_id}": {
+      "get": {
+        "operationId": "get_order_raw",
+        "summary": "Raw OMS mock (use tools/query_order in production Agent)",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "force_fail",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["timeout", "500", "503"]
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Order JSON" },
+          "404": { "description": "Not found" },
+          "500": { "description": "Chaos failure" }
+        }
+      }
+    }
+  }
+}

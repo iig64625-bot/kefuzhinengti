@@ -1,131 +1,104 @@
-# 🌙 星眠 SmartSleep — 专属智能客服
+# 星眠 SmartSleep 智能客服 Agent
 
-基于 [Dify](https://dify.ai/) 平台构建的 RAG 智能客服工作流，为「星眠 SmartSleep 智能助眠枕」提供多分支自动问答服务。
+> **求职作品集**：智能客服 Agent + **自建 FastAPI 后端**（会话 / 日志 / Trace / HTTP 订单工具）+ Golden Set 评测。  
+> 本仓库已替换旧版「仅 Dify 四分支工作流 / dify-workflow.yml」项目；以可运行后端与可复现评测为主资产。  
+> 仓库：https://github.com/iig64625-bot/kefuzhinengti
 
-## 🏗️ 工作流架构
+[![Dify](https://img.shields.io/badge/Dify-Chatflow-blue)](https://dify.ai)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI%2BSQLite-009688)]()
+[![Eval](https://img.shields.io/badge/Eval-20%20Golden-orange)]()
 
-```
-用户提问 → 问题分类器 → 4条分支并行处理
-                          ├─ 产品信息 → 知识检索1 → LLM1 → 回复
-                          ├─ 使用/售后 → 知识检索2 → LLM2 → 回复
-                          ├─ 订单查询 → 知识检索3 → LLM3 → 回复
-                          └─ 退款问题 → 知识检索4 → LLM4 → 回复
-```
+## 项目简介
 
-### 核心节点
+**星眠 SmartSleep** 是虚构电商品牌的 7×24 智能客服。系统工程分层：
 
-| 节点 | 类型 | 说明 |
-|------|------|------|
-| 问题分类器 | Question Classifier | 将用户问题自动分为4类，使用 GPT-5.5 |
-| 知识检索 1-4 | Knowledge Retrieval | 各分支检索对应知识库（混合检索：向量0.7 + 关键词0.3） |
-| LLM 1-4 | LLM | 各分支独立Prompt，使用 GPT-5.4 |
-| 直接回复 1-4 | Answer | 输出对应LLM的回答 |
+| 层 | 职责 | 资产归属 |
+|----|------|----------|
+| Dify Chatflow | 分流、RAG 体验、HITL | 编排（可替换） |
+| FastAPI 后端 | 会话、消息、Trace、访问日志、工单、Mock OMS | **自有** |
+| 评测脚本 | Golden Set 20 题 → 准确率 / 兜底率 / Trace | **可证明** |
 
-### 分类体系
+面试时可说：换 Dify 账号不会丢后端数据库、工具契约与评测数字。
 
-| 分类 | 覆盖范围 |
-|------|----------|
-| **产品信息** | 产品介绍、功能说明、型号区别(SS-100/200/300)、价格、促销、规格参数、购买渠道 |
-| **产品使用/售后** | 首次使用、App绑定、蓝牙连接、功能操作、清洁保养、故障排查、保修维修 |
-| **订单查询** | 订单状态、物流跟踪、修改地址、发票申请、支付异常 |
-| **退款问题** | 退款/退货政策、申请流程、到账时间、进度查询、退货寄回 |
-
-## 📂 项目结构
+## 技术架构
 
 ```
-SmartSleep-CS/
-├── dify-workflow.yml          # Dify 工作流 DSL（可直接导入 Dify）
-├── docs/
-│   ├── workflow-architecture.md  # 工作流详细架构说明
-│   └── deployment.md          # 部署上线方案（API/嵌入/小程序/监控/成本）
-├── tests/
-│   ├── test-cases.md          # 测试用例矩阵（52用例+12对抗测试）
-│   ├── test_e2e.py            # 自动化端到端测试脚本
-│   └── .env.example           # API Key 配置模板
-├── knowledge-base/            # 知识库文档（需自行上传至 Dify）
-│   ├── product-info/          # 产品信息类文档
-│   ├── usage-after-sales/     # 使用/售后类文档
-│   ├── order-tracking/        # 订单查询类文档
-│   └── refund-policy/         # 退款政策类文档
-├── README.md
-└── .gitignore
+用户 → Dify Chatflow（体验层）
+         ├─ 知识检索 + LLM
+         ├─ HTTP 工具 → 自建 /api/v1/tools/query_order
+         └─ 失败 → 转人工 / Ticket
+              ↕
+       FastAPI + SQLite
+         ├─ POST /api/v1/chat（本地 RAG 可独立 demo）
+         ├─ conversations / messages / trace_events / tickets
+         └─ Mock OMS（timeout / 500 混沌 → 重试 → 降级）
 ```
 
-## 🚀 快速开始
+## 简历可写数字（自动生成）
 
-### 1. 导入工作流
-
-1. 登录 [Dify Cloud](https://cloud.dify.ai/) 或自部署的 Dify 实例
-2. 点击「创建应用」→「导入 DSL」
-3. 上传 `dify-workflow.yml` 文件
-4. 工作流将自动还原所有节点和连接
-
-### 2. 配置知识库
-
-工作流引用了 4 个知识库，导入后需要重新关联：
-
-| 知识库节点 | 建议知识库名称 | 文档来源 |
-|------------|---------------|----------|
-| 知识检索 1 | 产品信息库 | `knowledge-base/product-info/` |
-| 知识检索 2 | 使用售后库 | `knowledge-base/usage-after-sales/` |
-| 知识检索 3 | 订单查询库 | `knowledge-base/order-tracking/` |
-| 知识检索 4 | 退款政策库 | `knowledge-base/refund-policy/` |
-
-### 3. 配置模型
-
-工作流使用以下模型，需确保 Dify 已配置对应 API Key：
-
-- **问题分类器**：`gpt-5.5`（OpenAI）
-- **LLM 1-4**：`gpt-5.4`（OpenAI）
-- **Embedding**：`text-embedding-3-large`（OpenAI）
-
-> 💡 可根据实际需求替换为其他模型（如 DeepSeek、Qwen 等），在 Dify 节点设置中修改即可。
-
-## 📋 Prompt 设计要点
-
-每个分支的 System Prompt 都遵循以下原则：
-
-1. **角色限定**：明确客服身份，不替代医疗建议
-2. **知识库约束**：仅基于检索结果回答，不编造信息
-3. **边界清晰**：各分支只处理自己领域的问题，跨域引导至对应分支
-4. **安全兜底**：涉及安全隐患（过热、异味、冒烟）立即提醒停止使用并联系人工客服
-5. **情绪处理**：退款分支特别设计了情绪安抚策略
-
-## 📞 人工客服兜底
-
-当知识库无法覆盖时，统一引导至：
-- **电话**：400-888-3366
-- **邮箱**：service@starsleep.cn
-
-## 📄 License
-
-MIT
-
----
-
-## 🧪 测试验证
-
-详见 [tests/test-cases.md](tests/test-cases.md)，包含：
-- 52个常规测试用例（4分类 + 边界异常）
-- 12个对抗测试用例（越狱/注入/跨域/隐私窃取）
-
-**快速运行自动化测试：**
 ```bash
-cd tests
-cp .env.example .env  # 填入你的 Dify API Key
-pip install requests python-dotenv
-python test_e2e.py              # 全量测试
-python test_e2e.py --quick      # 只跑P0
-python test_e2e.py --adversarial # 含对抗测试
-python test_e2e.py --json       # 输出JSON报告
+backend\.venv\Scripts\python tests\run_eval.py
 ```
 
-## 🚀 部署上线
+最新结果（见 [docs/eval-report.md](docs/eval-report.md)）：
 
-详见 [docs/deployment.md](docs/deployment.md)，包含：
-- 3种发布方式（WebApp / 嵌入式 / API调用）
-- Python & Node.js 接入代码
-- 微信小程序中转方案
-- 监控告警配置
-- 成本估算（¥0.03/次 → DeepSeek可降至¥0.003/次）
-- 上线 Checklist
+| 指标 | 目标 | 实际 |
+|------|------|------|
+| 答案准确率（加权） | ≥80% | **见 eval-report** |
+| 检索命中率 | ≥85% | **见 eval-report** |
+| 安全合规（Q19/Q20） | 100% | **见 eval-report** |
+| Golden Set | 20 题 | **见 eval-report** |
+| 工具闭环 | 重试+降级 | force_fail=500 → 3 次后 degrade |
+
+## 快速启动后端
+
+```bash
+cd backend
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+copy .env.example .env
+uvicorn app.main:app --reload --port 8000
+```
+
+- Swagger：http://127.0.0.1:8000/docs  
+- 说明：[backend/README.md](backend/README.md)  
+- Dify 接 HTTP 工具：[docs/dify-http-tool.md](docs/dify-http-tool.md)
+
+### 演示三连
+
+```bash
+# 1）正常查单
+curl -X POST http://127.0.0.1:8000/api/v1/chat -H "Content-Type: application/json" -d "{\"query\":\"帮我查订单 PP20260713001234 物流\"}"
+
+# 2）工具失败降级
+curl "http://127.0.0.1:8000/api/v1/tools/query_order?order_id=PP20260713001234&force_fail=500"
+
+# 3）看 Trace（把 conversation_id 换成上一步返回值）
+curl http://127.0.0.1:8000/api/v1/conversations/{id}/traces
+```
+
+## 项目结构
+
+```
+kefuzhinengti/  (本仓库根目录 = StarSleep Agent)
+├── backend/                 # FastAPI：会话 / 日志 / Trace / OMS / 工具门面
+├── dify/                    # OpenAPI + HTTP 接线说明
+├── docs/                    # 架构、评测报告、安全、工具闭环
+├── knowledge-base/          # 4 类 Markdown 知识库
+├── prompts/                 # System / User Prompt
+└── tests/
+    ├── golden_set.json      # 机器可读 20 题
+    ├── golden-questions.md
+    └── run_eval.py          # 产出 docs/eval-report.md
+```
+
+## 对照面试视频的三点
+
+1. **系统工程**：API + SQLite 会话 + request logs + Trace + Ticket（不只是 Dify 编排）  
+2. **可证明**：`run_eval.py` → 准确率 / 通过题数 / 安全合规；可附 JSON  
+3. **真工具闭环**：HTTP `query_order` + timeout/retry + `degraded` 降级转人工  
+
+## 安全
+
+见 [docs/safety-policy.md](docs/safety-policy.md)。危险品建议「继续用」、代查他人订单必须拦截（Q19/Q20）。
